@@ -1,0 +1,38 @@
+# Python & Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch Model Weights (downloaded automatically on first run)
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Outputs & Test Caches
+outputs/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Datasets & Local Secrets
+road_obstacle_dataset/
+test_dataset/
+.kaggle/
+.env
+*.env
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini

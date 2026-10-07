@@ -1,0 +1,67 @@
+
+# RODD-Vision Configuration
+# Assistive Device for Visually Impaired – Road Obstacle Detection Pipeline
+
+model:
+  type: yoloworld              # yoloworld | coco | custom
+  weights: yolov8s-worldv2.pt
+  custom_weights_path: ""      # path to user-supplied best.pt (CustomWeightsDetector)
+  confidence: 0.4
+  imgsz: 640
+
+classes:
+  - building
+  - bus
+  - car
+  - door
+  - dustbin
+  - electric pole
+  - person
+  - pillar
+  - pit
+  - road sign
+  - stair
+  - street chair
+  - tram
+  - tree
+
+# Danger priority order (highest → lowest)
+danger_order:
+  - pit
+  - stair
+  - car
+  - bus
+  - tram
+  - person
+  - electric pole
+  - road sign
+  - dustbin
+  - door
+  - building
+  - pillar
+  - street chair
+  - tree
+
+spatial:
+  left_threshold: 0.33        # fraction of frame width
+  right_threshold: 0.66
+  near_area_ratio: 0.15       # box area / frame area >= this → near
+  far_area_ratio: 0.03        # box area / frame area <= this → far (else medium)
+  near_bottom_y: 0.75         # box bottom-edge y ratio >= this → near override
+
+speech:
+  enabled: true
+  cooldown_seconds: 3
+  dedup_window_seconds: 6
+  rate: 150                   # words per minute
+  volume: 1.0
+
+source:
+  webcam_index: 0
+  skip_frames: 2              # process every Nth frame (1 = every frame)
+
+output:
+  save_dir: outputs
+  display: true
+  draw_conf: true
+  draw_fps: true
