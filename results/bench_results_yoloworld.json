@@ -1,0 +1,160 @@
+{
+  "building": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {
+      "bus": 0.7931084632873535
+    },
+    "avg_ms": 319.7
+  },
+  "bus": {
+    "hits": 2,
+    "misses": 1,
+    "total": 3,
+    "hit_rate": 0.6666666666666666,
+    "best_conf": 0.616,
+    "false_positives": {
+      "pillar": 0.9514524340629578,
+      "person": 0.6950395703315735
+    },
+    "avg_ms": 155.4
+  },
+  "car": {
+    "hits": 1,
+    "misses": 2,
+    "total": 3,
+    "hit_rate": 0.3333333333333333,
+    "best_conf": 0.489,
+    "false_positives": {
+      "bus": 0.7931084632873535,
+      "tree": 0.3958131670951843
+    },
+    "avg_ms": 140.8
+  },
+  "chair": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 120.6
+  },
+  "door": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 125.5
+  },
+  "dustbin": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 117.9
+  },
+  "electric pole": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 115.7
+  },
+  "person": {
+    "hits": 2,
+    "misses": 1,
+    "total": 3,
+    "hit_rate": 0.6666666666666666,
+    "best_conf": 0.665,
+    "false_positives": {
+      "bus": 0.7931084632873535
+    },
+    "avg_ms": 120.4
+  },
+  "pillar": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 124.3
+  },
+  "pit": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {
+      "person": 0.5083827376365662
+    },
+    "avg_ms": 118.7
+  },
+  "road sign": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 121.9
+  },
+  "stair": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 120.7
+  },
+  "street chair": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 117.4
+  },
+  "table": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 128.6
+  },
+  "tram": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {},
+    "avg_ms": 130.5
+  },
+  "tree": {
+    "hits": 0,
+    "misses": 3,
+    "total": 3,
+    "hit_rate": 0.0,
+    "best_conf": 0.0,
+    "false_positives": {
+      "bus": 0.7931084632873535
+    },
+    "avg_ms": 134.7
+  }
+}

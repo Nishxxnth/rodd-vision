@@ -1,65 +1,190 @@
-
 # RODD-Vision Configuration
-# Assistive Device for Visually Impaired – Road Obstacle Detection Pipeline
+# Profiles: outdoor | indoor | all
+# Select: python main.py --profile outdoor
 
 model:
-  type: yoloworld              # yoloworld | coco | custom
+  type: yoloworld
   weights: yolov8s-worldv2.pt
-  custom_weights_path: ""      # path to user-supplied best.pt (CustomWeightsDetector)
-  confidence: 0.4
+  large_weights: yolov8l-worldv2.pt
+  coco_weights: yolov8m.pt
+  custom_weights_path: ''
+  confidence: 0.3
   imgsz: 640
-
+  hybrid_iou: 0.5
+profiles:
+  outdoor:
+    classes:
+    - building
+    - bus
+    - car
+    - door
+    - dustbin
+    - electric pole
+    - person
+    - pillar
+    - pit
+    - road sign
+    - stair
+    - street chair
+    - tram
+    - tree
+    danger_order:
+    - pit
+    - stair
+    - car
+    - bus
+    - tram
+    - person
+    - electric pole
+    - road sign
+    - dustbin
+    - door
+    - building
+    - pillar
+    - street chair
+    - tree
+  indoor:
+    classes:
+    - chair
+    - door
+    - person
+    - pillar
+    - stair
+    - table
+    - bottle
+    - laptop
+    danger_order:
+    - stair
+    - person
+    - pillar
+    - door
+    - chair
+    - table
+    - laptop
+    - bottle
+  all:
+    classes:
+    - bottle
+    - building
+    - bus
+    - car
+    - chair
+    - door
+    - dustbin
+    - electric pole
+    - laptop
+    - person
+    - pillar
+    - pit
+    - road sign
+    - stair
+    - street chair
+    - table
+    - tram
+    - tree
+    danger_order:
+    - pit
+    - stair
+    - car
+    - bus
+    - tram
+    - person
+    - electric pole
+    - road sign
+    - dustbin
+    - door
+    - building
+    - pillar
+    - chair
+    - table
+    - street chair
+    - tree
+    - laptop
+    - bottle
+active_profile: outdoor
+class_thresholds:
+  car: 0.45
+  bus: 0.45
+  person: 0.45
+  tram: 0.4
+  street chair: 0.3
+  road sign: 0.3
+  tree: 0.3
+  chair: 0.35
+  table: 0.35
+  bottle: 0.35
+  laptop: 0.35
+  stair: 0.22
+  door: 0.25
+  pit: 0.2
+  electric pole: 0.22
+  pillar: 0.22
+  dustbin: 0.25
+  building: 0.25
+prompts:
+  building: a large building or structure
+  bus: a bus
+  car: a car or vehicle
+  door: a door or entrance
+  dustbin: a trash can or dustbin
+  electric pole: a utility pole or electric pole
+  person: a person
+  pillar: a concrete pillar or column
+  pit: a pothole or pit in the road
+  road sign: a road sign or street sign
+  stair: a flight of stairs or steps
+  street chair: a bench or street chair
+  tram: a tram or streetcar or train
+  tree: a tree or large plant
+  chair: a chair
+  table: a table or desk
+  bottle: a bottle
+  laptop: a laptop computer
 classes:
-  - building
-  - bus
-  - car
-  - door
-  - dustbin
-  - electric pole
-  - person
-  - pillar
-  - pit
-  - road sign
-  - stair
-  - street chair
-  - tram
-  - tree
-
-# Danger priority order (highest → lowest)
+- building
+- bus
+- car
+- door
+- dustbin
+- electric pole
+- person
+- pillar
+- pit
+- road sign
+- stair
+- street chair
+- tram
+- tree
 danger_order:
-  - pit
-  - stair
-  - car
-  - bus
-  - tram
-  - person
-  - electric pole
-  - road sign
-  - dustbin
-  - door
-  - building
-  - pillar
-  - street chair
-  - tree
-
+- pit
+- stair
+- car
+- bus
+- tram
+- person
+- electric pole
+- road sign
+- dustbin
+- door
+- building
+- pillar
+- street chair
+- tree
 spatial:
-  left_threshold: 0.33        # fraction of frame width
+  left_threshold: 0.33
   right_threshold: 0.66
-  near_area_ratio: 0.15       # box area / frame area >= this → near
-  far_area_ratio: 0.03        # box area / frame area <= this → far (else medium)
-  near_bottom_y: 0.75         # box bottom-edge y ratio >= this → near override
-
+  near_area_ratio: 0.15
+  far_area_ratio: 0.03
+  near_bottom_y: 0.75
 speech:
   enabled: true
   cooldown_seconds: 3
   dedup_window_seconds: 6
-  rate: 150                   # words per minute
+  rate: 150
   volume: 1.0
-
 source:
   webcam_index: 0
-  skip_frames: 2              # process every Nth frame (1 = every frame)
-
+  skip_frames: 2
 output:
   save_dir: outputs
   display: true

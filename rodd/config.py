@@ -1,13 +1,14 @@
 """
 rodd/config.py
 Loads config.yaml into typed dataclasses.
+Supports profiles (outdoor | indoor | all), per-class thresholds, and prompts.
 """
 from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Optional
 
 import yaml
 
@@ -18,11 +19,14 @@ import yaml
 
 @dataclass
 class ModelConfig:
-    type: str = "yoloworld"
+    type: str = "hybrid"
     weights: str = "yolov8s-worldv2.pt"
+    large_weights: str = "yolov8l-worldv2.pt"
+    coco_weights: str = "yolov8m.pt"
     custom_weights_path: str = ""
-    confidence: float = 0.4
+    confidence: float = 0.30
     imgsz: int = 640
+    hybrid_iou: float = 0.50
 
 
 @dataclass
@@ -66,6 +70,28 @@ class RODDConfig:
     speech: SpeechConfig = field(default_factory=SpeechConfig)
     source: SourceConfig = field(default_factory=SourceConfig)
     output: OutputConfig = field(default_factory=OutputConfig)
+    # Per-class confidence thresholds (class_name -> threshold).
+    # If a class is absent, model.confidence is used as fallback.
+    class_thresholds: Dict[str, float] = field(default_factory=dict)
+    # Descriptive prompt strings for open-vocab models (class_name -> prompt).
+    prompts: Dict[str, str] = field(default_factory=dict)
+    # The profile that was applied (informational)
+    active_profile: str = "outdoor"
+    # All profiles loaded from config (profile_name -> {classes, danger_order})
+    profiles: Dict[str, dict] = field(default_factory=dict)
+
+    def threshold_for(self, class_name: str) -> float:
+        """Return the per-class confidence threshold, falling back to global."""
+        return self.class_thresholds.get(class_name, self.model.confidence)
+
+    def prompt_for(self, class_name: str) -> str:
+        """Return the descriptive prompt for open-vocab querying, fallback to name."""
+        return self.prompts.get(class_name, class_name)
+
+    def prompts_for_classes(self, classes: Optional[List[str]] = None) -> List[str]:
+        """Return list of prompts in same order as classes."""
+        cls = classes if classes is not None else self.classes
+        return [self.prompt_for(c) for c in cls]
 
 
 # ---------------------------------------------------------------------------
@@ -74,9 +100,22 @@ class RODDConfig:
 
 _DEFAULT_CFG = Path(__file__).parent.parent / "config.yaml"
 
+VALID_PROFILES = ("outdoor", "indoor", "all")
 
-def load_config(path: str | Path | None = None) -> RODDConfig:
-    """Load YAML config file and return RODDConfig dataclass."""
+
+def load_config(
+    path: str | Path | None = None,
+    profile: Optional[str] = None,
+) -> RODDConfig:
+    """Load YAML config file and return RODDConfig dataclass.
+
+    Parameters
+    ----------
+    path    : path to config.yaml (default: rodd_vision/config.yaml)
+    profile : one of 'outdoor', 'indoor', 'all'.  Overrides active_profile
+              from the yaml and sets cfg.classes / cfg.danger_order from that
+              profile's section.  Pass None to use the yaml's active_profile.
+    """
     cfg_path = Path(path) if path else _DEFAULT_CFG
     if not cfg_path.exists():
         raise FileNotFoundError(f"Config file not found: {cfg_path}")
@@ -89,18 +128,46 @@ def load_config(path: str | Path | None = None) -> RODDConfig:
     # -- model
     m = raw.get("model", {})
     cfg.model = ModelConfig(
-        type=m.get("type", "yoloworld"),
+        type=m.get("type", "hybrid"),
         weights=m.get("weights", "yolov8s-worldv2.pt"),
+        large_weights=m.get("large_weights", "yolov8l-worldv2.pt"),
+        coco_weights=m.get("coco_weights", "yolov8m.pt"),
         custom_weights_path=m.get("custom_weights_path", ""),
-        confidence=float(m.get("confidence", 0.4)),
+        confidence=float(m.get("confidence", 0.30)),
         imgsz=int(m.get("imgsz", 640)),
+        hybrid_iou=float(m.get("hybrid_iou", 0.50)),
     )
 
-    # -- classes
-    cfg.classes = raw.get("classes", [])
+    # -- profiles
+    cfg.profiles = raw.get("profiles", {})
 
-    # -- danger_order
-    cfg.danger_order = raw.get("danger_order", [])
+    # -- determine active profile
+    requested_profile = profile or raw.get("active_profile", "outdoor")
+    if requested_profile not in VALID_PROFILES:
+        raise ValueError(
+            f"Unknown profile {requested_profile!r}. "
+            f"Valid choices: {VALID_PROFILES}"
+        )
+    cfg.active_profile = requested_profile
+
+    # -- classes & danger_order (from profile if available, else flat list)
+    profile_data = cfg.profiles.get(requested_profile, {})
+    cfg.classes = profile_data.get("classes", raw.get("classes", []))
+    cfg.danger_order = profile_data.get(
+        "danger_order", raw.get("danger_order", [])
+    )
+
+    # -- per-class thresholds
+    cfg.class_thresholds = {
+        str(k): float(v)
+        for k, v in raw.get("class_thresholds", {}).items()
+    }
+
+    # -- prompts
+    cfg.prompts = {
+        str(k): str(v)
+        for k, v in raw.get("prompts", {}).items()
+    }
 
     # -- spatial
     s = raw.get("spatial", {})

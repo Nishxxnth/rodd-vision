@@ -17,8 +17,8 @@ _ROOT = Path(__file__).parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from rodd.config import load_config
-from rodd.detectors import build_detector
+from rodd.config import load_config, VALID_PROFILES
+from rodd.detectors import build_detector, _DETECTOR_MAP
 from rodd.pipeline import RODDPipeline
 from rodd.sources import build_source
 from rodd.utils import setup_logging, save_frame
@@ -36,9 +36,11 @@ def parse_args() -> argparse.Namespace:
 Examples
 --------
   python main.py --source webcam
-  python main.py --source video  --path samples/demo.mp4
-  python main.py --source image  --path samples/bus.jpg --save --mute
-  python main.py --source folder --path samples/
+  python main.py --source webcam   --profile indoor
+  python main.py --source video    --path samples/demo.mp4
+  python main.py --source image    --path samples/bus.jpg --save --mute
+  python main.py --source folder   --path samples/
+  python main.py --detector hybrid --profile outdoor
         """,
     )
     p.add_argument("--source", choices=["webcam", "video", "image", "folder"],
@@ -53,8 +55,18 @@ Examples
                    help="Do not show OpenCV window")
     p.add_argument("--save", action="store_true",
                    help="Save annotated frames to outputs/")
-    p.add_argument("--detector", choices=["yoloworld", "coco", "custom"],
-                   default=None, help="Detector to use (overrides config)")
+    p.add_argument(
+        "--detector",
+        choices=list(_DETECTOR_MAP.keys()),
+        default=None,
+        help="Detector backend to use (overrides config.model.type)",
+    )
+    p.add_argument(
+        "--profile",
+        choices=list(VALID_PROFILES),
+        default=None,
+        help="Detection profile: outdoor | indoor | all (overrides config.active_profile)",
+    )
     p.add_argument("--config", type=str, default=None,
                    help="Path to config.yaml (default: rodd_vision/config.yaml)")
     p.add_argument("--verbose", action="store_true", help="Debug logging")
@@ -71,9 +83,16 @@ def main() -> None:
     logger = logging.getLogger("rodd.main")
 
     # --- config
-    cfg = load_config(args.config)
+    cfg = load_config(args.config, profile=args.profile)
     if args.conf is not None:
         cfg.model.confidence = args.conf
+
+    logger.info(
+        "Profile: %s | %d classes | detector: %s",
+        cfg.active_profile,
+        len(cfg.classes),
+        args.detector or cfg.model.type,
+    )
 
     # --- output dir
     out_dir = Path(cfg.output.save_dir)

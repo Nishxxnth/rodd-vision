@@ -17,8 +17,8 @@ _ROOT = Path(__file__).parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from rodd.config import load_config, RODDConfig
-from rodd.detectors import build_detector, BaseDetector
+from rodd.config import load_config, RODDConfig, VALID_PROFILES
+from rodd.detectors import build_detector, BaseDetector, _DETECTOR_MAP
 from rodd.pipeline import RODDPipeline
 from rodd.speech import SpeechEngine
 from rodd.spatial import SpatialAnnotation
@@ -62,6 +62,16 @@ st.markdown("""
         color: #a8e6cf;
     }
     .stDataFrame { font-size: 0.85em; }
+    .profile-badge {
+        display: inline-block;
+        background: #2d3561;
+        color: #a8e6cf;
+        border-radius: 4px;
+        padding: 2px 8px;
+        font-size: 0.85em;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -77,24 +87,41 @@ with st.sidebar:
 
     source_type = st.selectbox("Input Source", ["Upload Image", "Upload Video", "Webcam"],
                                key="source_sel")
-    detector_type = st.selectbox("Detector", ["yoloworld", "coco"], key="det_sel")
-    conf = st.slider("Confidence Threshold", 0.1, 0.9, 0.4, 0.05, key="conf_sl")
+
+    # Profile selector
+    profile = st.selectbox(
+        "Detection Profile",
+        list(VALID_PROFILES),
+        index=0,
+        key="profile_sel",
+        help="outdoor: road classes | indoor: room classes | all: combined",
+    )
+
+    detector_type = st.selectbox(
+        "Detector",
+        list(_DETECTOR_MAP.keys()),
+        index=list(_DETECTOR_MAP.keys()).index("hybrid") if "hybrid" in _DETECTOR_MAP else 0,
+        key="det_sel",
+        help="hybrid: best accuracy | yoloworld_large: fast single model | coco: fastest",
+    )
+    conf = st.slider("Confidence Threshold (global)", 0.1, 0.9, 0.30, 0.05, key="conf_sl")
     mute = st.toggle("🔇 Mute Speech", value=False, key="mute_tog")
     cooldown = st.slider("Speech Cooldown (s)", 1.0, 10.0, 3.0, 0.5, key="cool_sl")
 
     st.divider()
-    st.markdown("**Target Classes**")
-    cfg_for_classes = load_config()
-    st.caption("  •  ".join(cfg_for_classes.classes))
+    # Show active classes for selected profile
+    _preview_cfg = load_config(profile=profile)
+    st.markdown(f"**Profile: `{profile}`** — {len(_preview_cfg.classes)} classes")
+    st.caption("  •  ".join(sorted(_preview_cfg.classes)))
 
 
 # ---------------------------------------------------------------------------
-# Cached detector
+# Cached detector (keyed by detector type + profile + conf)
 # ---------------------------------------------------------------------------
 
 @st.cache_resource(show_spinner="Loading detector model …")
-def get_detector(det_type: str, conf_thresh: float) -> BaseDetector:
-    cfg = load_config()
+def get_detector(det_type: str, profile_name: str, conf_thresh: float) -> BaseDetector:
+    cfg = load_config(profile=profile_name)
     cfg.model.type = det_type
     cfg.model.confidence = conf_thresh
     return build_detector(cfg, detector_type=det_type)
@@ -104,7 +131,12 @@ def get_detector(det_type: str, conf_thresh: float) -> BaseDetector:
 # Build pipeline (not cached – depends on mutable speech settings)
 # ---------------------------------------------------------------------------
 
-def make_pipeline(detector: BaseDetector, cfg: RODDConfig, mute_flag: bool, cooldown_s: float) -> RODDPipeline:
+def make_pipeline(
+    detector: BaseDetector,
+    cfg: RODDConfig,
+    mute_flag: bool,
+    cooldown_s: float,
+) -> RODDPipeline:
     speech = SpeechEngine(
         enabled=not mute_flag,
         cooldown=cooldown_s,
@@ -120,13 +152,13 @@ def make_pipeline(detector: BaseDetector, cfg: RODDConfig, mute_flag: bool, cool
 # ---------------------------------------------------------------------------
 
 st.title("🚦 RODD-Vision – Road Obstacle Detection")
-st.caption("Assistive pipeline from Nedjar et al., 2026")
+st.caption("Assistive pipeline | profile: **" + profile + "** | detector: **" + detector_type + "**")
 
-cfg = load_config()
+cfg = load_config(profile=profile)
 cfg.model.confidence = conf
 cfg.speech.cooldown_seconds = cooldown
 
-detector = get_detector(detector_type, conf)
+detector = get_detector(detector_type, profile, conf)
 
 announce_log: list[str] = st.session_state.get("announce_log", [])
 st.session_state["announce_log"] = announce_log
@@ -157,6 +189,10 @@ if source_type == "Upload Image":
             with col_info:
                 st.metric("Detections", len(annotations))
                 st.metric("Inference", f"{inf_ms:.0f} ms")
+                st.markdown(
+                    f'<div class="profile-badge">Profile: {profile}</div>',
+                    unsafe_allow_html=True,
+                )
                 st.divider()
 
                 if annotations:
@@ -197,7 +233,6 @@ elif source_type == "Upload Video":
     uploaded_video = st.file_uploader("Upload a video", type=["mp4", "avi", "mov", "mkv"],
                                        key="vid_uploader")
     if uploaded_video is not None:
-        # Save to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=Path(uploaded_video.name).suffix) as tmp:
             tmp.write(uploaded_video.read())
             tmp_path = tmp.name
